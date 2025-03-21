@@ -9,18 +9,16 @@ Original file is located at
 
 import asyncio
 import sys
-import torch
-from patches import patch_torch_classes
-
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 else:
     asyncio.set_event_loop_policy(asyncio.DefaultEventLoopPolicy())
 
+from patches import patch_torch_classes
 patch_torch_classes()
 
+import torch
 torch.set_grad_enabled(False)
-torch._C._set_autocast_enabled(False)
 
 import streamlit as st
 import pandas as pd
@@ -36,8 +34,7 @@ from pipeline import (
     categorize_momentum
 )
 
-def fix_streamlit_watcher():
-    st.config.set_option("server.fileWatcherType", "none")
+st._config.set_option("server.fileWatcherType", "none")
 
 # Configure page
 st.set_page_config(
@@ -249,5 +246,4 @@ def convert_df(df):
     return df.to_csv(index=False).encode('utf-8')
 
 if __name__ == "__main__":
-    fix_streamlit_watcher()
     main()
