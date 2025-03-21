@@ -7,6 +7,16 @@ Original file is located at
     https://colab.research.google.com/drive/1-hkSMCjYIaZQcce1JDJS_IrJIqPLDnSw
 """
 
+import asyncio
+import sys
+
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+else:
+    asyncio.set_event_loop_policy(asyncio.DefaultEventLoopPolicy())
+
+from patches import patch_torch_classes
+patch_torch_classes()
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -33,7 +43,15 @@ if 'processed' not in st.session_state:
     st.session_state.processed = False
 if 'reports' not in st.session_state:
     st.session_state.reports = {}
+from streamlit.web.bootstrap import run
+from streamlit import config as _config
 
+def fix_streamlit_watcher():
+    _config.set_option("server.fileWatcherType", "none")
+    
+if __name__ == "__main__":
+    fix_streamlit_watcher()
+    main()
 # Main app
 def main():
     st.title("🇬🇦 Gabon Election Threat Intelligence Dashboard")
