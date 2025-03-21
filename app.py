@@ -9,19 +9,25 @@ Original file is located at
 
 import asyncio
 import sys
+import torch
+from patches import patch_torch_classes
 
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 else:
     asyncio.set_event_loop_policy(asyncio.DefaultEventLoopPolicy())
 
-from patches import patch_torch_classes
 patch_torch_classes()
+
+torch.set_grad_enabled(False)
+torch._C._set_autocast_enabled(False)
+
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime
 import os
+
 
 # Import your existing functions (make sure to remove notebook-specific code)
 from pipeline import (
@@ -29,6 +35,9 @@ from pipeline import (
     visualize_trends, generate_investigative_report,
     categorize_momentum
 )
+
+def fix_streamlit_watcher():
+    st.config.set_option("server.fileWatcherType", "none")
 
 # Configure page
 st.set_page_config(
@@ -43,15 +52,8 @@ if 'processed' not in st.session_state:
     st.session_state.processed = False
 if 'reports' not in st.session_state:
     st.session_state.reports = {}
-from streamlit.web.bootstrap import run
-from streamlit import config as _config
 
-def fix_streamlit_watcher():
-    _config.set_option("server.fileWatcherType", "none")
     
-if __name__ == "__main__":
-    fix_streamlit_watcher()
-    main()
 # Main app
 def main():
     st.title("🇬🇦 Gabon Election Threat Intelligence Dashboard")
@@ -166,6 +168,20 @@ def main():
                 format_func=lambda x: f"Cluster {x}"
             )
 
+            cluster_score = next((score for cluster, score in emerging_trends if cluster == cluster_selector), 0)
+
+            category = categorize_momentum(cluster_score)
+            color_map = {
+             'Tier 1: Ambient Noise (Normal baseline activity)': '🟢',
+             'Tier 2: Emerging Narrative (Potential story development)': '🟡',
+             'Tier 3: Coordinated Activity (Organized group behavior)': '🟠',
+             'Tier 4: Viral Emergency (Requires immediate response)': '🔴'
+              }
+            #color = color_map.get(category.split(':')[0], '⚪')
+            color = color_map.get(category, '⚪')
+            st.markdown(f"""
+             **Threat Classification:** {color} `{category}`
+              """)
             if cluster_selector not in st.session_state.reports:
                 with st.spinner("Generating intelligence report..."): 
                     # Get the cluster score from emerging_trends
@@ -201,8 +217,8 @@ def main():
             st.markdown("### Threat Tier Classification")
             intel_df = pd.DataFrame([{
                 "Cluster": cluster,
-                "Momentum": score,
-                "Category": categorize_momentum(score)
+                "Momentum": score
+                #"Category": categorize_momentum(score)
             } for cluster, score in emerging_trends])
 
             st.bar_chart(
@@ -233,4 +249,5 @@ def convert_df(df):
     return df.to_csv(index=False).encode('utf-8')
 
 if __name__ == "__main__":
+    fix_streamlit_watcher()
     main()
