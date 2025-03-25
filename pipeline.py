@@ -40,6 +40,7 @@ logger.info(f"Using device: {device}")
 
 # Configuration (now using Streamlit secrets)
 CONFIG = {
+    "api_key": "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",
     "model_id": "llama3-70b-8192",#qwen-qwq-32b",#"llama-3.3-70b-versatile",
     "gpu_params": {
         "batch_size": 256,  # Increased batch size
@@ -74,7 +75,7 @@ CONFIG = {
 
 # Initialize Groq client with Streamlit secrets
 def get_groq_client():
-    return Groq(api_key=st.secrets.groq.api_key)
+    return Groq(api_key=CONFIG["api_key"])
 
 # Load BERT model to GPU
 tokenizer = BertTokenizer.from_pretrained(CONFIG["bertrend"]["model_name"])
