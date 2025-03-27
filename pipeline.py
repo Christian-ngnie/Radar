@@ -8,7 +8,7 @@ import re
 import logging
 import matplotlib.pyplot as plt
 import seaborn as sns
-from transformers import BertTokenizer, BertModel, , GPT2Tokenizer
+from transformers import BertTokenizer, BertModel, GPT2Tokenizer
 from hdbscan import HDBSCAN
 import annoy
 from groq import Groq
