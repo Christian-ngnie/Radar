@@ -69,7 +69,7 @@ class AnalysisPipeline:
     def clean_data(self, df):
         valid_df = df.dropna(subset=["text"])
         valid_df['text'] = valid_df['text'].apply(
-            lambda x: re.sub(r"[\x00-\x1F\x7F-\x9F]", "", str(x))
+            lambda x: re.sub(r"[\x00-\x1F\x7F-\x9F]", "", str(x)))
         return valid_df
 
     @st.cache_data(max_entries=10, ttl=3600)
