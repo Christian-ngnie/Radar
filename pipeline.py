@@ -212,9 +212,8 @@ class AnalysisPipeline:
             logger.error(f"Visualization failed: {str(e)}")
             return None
 
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
-    @st.cache_data(max_entries=20, ttl=3600, show_spinner="Generating report...")
-
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
+@st.cache_data(max_entries=20, ttl=3600, show_spinner="Generating report...")
 def generate_investigative_report(_self, cluster_data, momentum_states, cluster_id, max_tokens=1024):
     """Cache generated reports with retry logic"""
     tokenizer = GPT2Tokenizer.from_pretrained("gpt2-xl")
