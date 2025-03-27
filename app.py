@@ -169,10 +169,10 @@ def display_threat_reports(clustered_df, emerging_trends, momentum_states):
     
     # Display category with color coding
     color_map = {
-        'Tier 1: Ambient Noise': '🟢',
-        'Tier 2: Emerging Narrative': '🟡',
-        'Tier 3: Coordinated Activity': '🟠',
-        'Tier 4: Viral Emergency': '🔴'
+        'Tier 1: Ambient Noise (Normal baseline activity)': '🟢',
+        'Tier 2: Emerging Narrative (Potential story development)': '🟡',
+        'Tier 3: Coordinated Activity (Organized group behavior)': '🟠',
+        'Tier 4: Viral Emergency (Requires immediate response)': '🔴'
     }
     st.markdown(f"""
     **Threat Classification:** {color_map.get(category, '⚪')} `{category}`
