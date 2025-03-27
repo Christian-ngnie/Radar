@@ -214,86 +214,88 @@ class AnalysisPipeline:
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
     @st.cache_data(max_entries=20, ttl=3600, show_spinner="Generating report...")
+
 def generate_investigative_report(_self, cluster_data, momentum_states, cluster_id, max_tokens=1024):
-        """Cache generated reports with retry logic"""
-        tokenizer = GPT2Tokenizer.from_pretrained("gpt2-xl")
-        try:
-            # Get top 10 documents with URLs
-            metrics = momentum_states.get(cluster_id, {})
-            sample_docs = cluster_data[['text', 'URL', 'Timestamp']].values.tolist()
-            random.shuffle(sample_docs)
-            Country="Gabon"
-            selected_docs = []
-            total_tokens = 0
-            # Select documents until we hit the token limit
-            for doc in sample_docs:
-                # Calculate the token count for the document
-                doc_tokens = len(tokenizer.encode(doc[0]))  # Encoding only the text
-                if total_tokens + doc_tokens <= max_tokens:
-                    selected_docs.append(doc)
-                    total_tokens += doc_tokens
-                else:
-                    break
-            response = _self.groq_client.chat.completions.create(
-                model="llama3-70b-8192",
-                messages=[{
-                    "role": "system",
-                    "content": f"""(
-                    Generate {Country} structured Foreign/domestic Information Manipulation and Interference (FIMI) intelligence report related to the upcoming presidential elections:
-                    -Provide general context and identify key narratives with the reference documents as evidence.\n
-                    -Map these narratives lifecycle: First Detected {cluster_data['Timestamp'].min().strftime('%Y-%m-%d %H:%M')} → Last Updated {cluster_data['Timestamp'].max().strftime('%Y-%m-%d %H:%M')}\n
-                    -Identify these narratives vehicles like memes, videos or text posts and provide the reference documents\n
-                    -Identify primary sources platforms used to spread these narratives\n
+    """Cache generated reports with retry logic"""
+    tokenizer = GPT2Tokenizer.from_pretrained("gpt2-xl")
+    try:
+        # Get top 10 documents with URLs
+        metrics = momentum_states.get(cluster_id, {})
+        sample_docs = cluster_data[['text', 'URL', 'Timestamp']].values.tolist()
+        random.shuffle(sample_docs)
+        Country="Gabon"
+        selected_docs = []
+        total_tokens = 0
+        # Select documents until we hit the token limit
+        for doc in sample_docs:
+            # Calculate the token count for the document
+            doc_tokens = len(tokenizer.encode(doc[0]))  # Encoding only the text
+            if total_tokens + doc_tokens <= max_tokens:
+                selected_docs.append(doc)
+                total_tokens += doc_tokens
+            else:
+                break
+        response = _self.groq_client.chat.completions.create(
+            model="llama3-70b-8192",
+            messages=[{
+                "role": "system",
+                "content": f"""(
+                Generate {Country} structured Foreign/domestic Information Manipulation and Interference (FIMI) intelligence report related to the upcoming presidential elections:
+                -Provide general context and identify key narratives with the reference documents as evidence.\n
+                -Map these narratives lifecycle: First Detected {cluster_data['Timestamp'].min().strftime('%Y-%m-%d %H:%M')} → Last Updated {cluster_data['Timestamp'].max().strftime('%Y-%m-%d %H:%M')}\n
+                -Identify these narratives vehicles like memes, videos or text posts and provide the reference documents\n
+                -Identify primary sources platforms used to spread these narratives\n
 
 
-                    -Identify and analyse ties and involvement of Russia or China or Turkey or Saudi Arabia.\n
-                    -Identify extremism/jihadist cases\n
-                    -Identify any case of anti-West, anti-France, pro/anti-ECOWAS, pro/anti-AES (Alliance of Sahel States), pro-Russia or Pro-China sentiment\n
-                    -Clearly identify hate speech, negative stereotyping, toxic incitement and mention some of them. Highlight and mention also the corresponding trigger lexicons used\n\n
+                -Identify and analyse ties and involvement of Russia or China or Turkey or Saudi Arabia.\n
+                -Identify extremism/jihadist cases\n
+                -Identify any case of anti-West, anti-France, pro/anti-ECOWAS, pro/anti-AES (Alliance of Sahel States), pro-Russia or Pro-China sentiment\n
+                -Clearly identify hate speech, negative stereotyping, toxic incitement and mention some of them. Highlight and mention also the corresponding trigger lexicons used\n\n
 
 
-                    - Identify coordinated network of accounts, analyse network topology and highlight coordination signs like post timing, source distribution, inauthentic engagement spikes on posts. As metrics we have: Total Posts: {metrics.get('cumulative_activity', 'N/A')}, Peak Hourly Activity: {metrics.get('peak_activity', 'N/A')}, source_count: {cluster_data['Source'].nunique()}, Current Momentum Score: {metrics.get('momentum', 'N/A'):.2f}, Timestamp: {cluster_data['Timestamp']}\n
-                    - Identify and analyse crossposting clusters\n
-                    - Identify narrative engineering like story arc development, meme warfare tactics, sentiment manipulation techniques\n
-                    - Identify AI-generated contents mimicking authentic Source\n
-                    - Identify reused/manipulated media (e.g., repurposed protest footage from 2021–2024 framed as “current unrest,” AI-generated imagery of alleged government corruption); Identify Viral templates linking policy decisions (e.g., austerity, resource deals) to foreign actors (France/UAE/China/Turkey/Saudi Arabia)\n
-                    - Identify Linguistic fingerprints like translation artifacts, atypical local dialect usage\n
+                - Identify coordinated network of accounts, analyse network topology and highlight coordination signs like post timing, source distribution, inauthentic engagement spikes on posts. As metrics we have: Total Posts: {metrics.get('cumulative_activity', 'N/A')}, Peak Hourly Activity: {metrics.get('peak_activity', 'N/A')}, source_count: {cluster_data['Source'].nunique()}, Current Momentum Score: {metrics.get('momentum', 'N/A'):.2f}, Timestamp: {cluster_data['Timestamp']}\n
+                - Identify and analyse crossposting clusters\n
+                - Identify narrative engineering like story arc development, meme warfare tactics, sentiment manipulation techniques\n
+                - Identify AI-generated contents mimicking authentic Source\n
+                - Identify reused/manipulated media (e.g., repurposed protest footage from 2021–2024 framed as “current unrest,” AI-generated imagery of alleged government corruption); Identify Viral templates linking policy decisions (e.g., austerity, resource deals) to foreign actors (France/UAE/China/Turkey/Saudi Arabia)\n
+                - Identify Linguistic fingerprints like translation artifacts, atypical local dialect usage\n
 
 
-                    -Based on all above, suggest 2-3 strong online Investigative leads using using clear, technical and advanced style sentences\n\n
-                    Exclude: Speculation, unverified claims, historical background, general statements, findings or answers. Base findings only on provided evidence documents\n
-                    Don't include other informations besides what's requested.\n
-                    All above insights should be provided relatively to the upcoming presidential elections. Therefore, skip and remove or just add 'non related' on cases or insights or narratives or any patterns that are not related to the upcoming elections.\n
-                    Don't duplicate findings from the same documents you are analyzing. Only report NEW patterns not seen in previous analysis.\n
-                    Don't use bullet points in the report, only paragraphs: the focus points above are to orient the content of your report not to be used as bullet points.\n
-                    Document only what you have found and skip what you didn't find.\n
-                    Skip and remove cases or insights or narratives or any patterns that are not related to the upcoming elections.\n
-                    Always reference your findings with documents URLs as evidence.\n
-                    Reference specific evidence from provided URLs
-                    )
-                    """
-                }, {
-                    "role": "user",
-                    "content": "\n".join([f"Document {i+1}: {doc[0]}\nURL: {doc[1]}" 
+                -Based on all above, suggest 2-3 strong online Investigative leads using using clear, technical and advanced style sentences\n\n
+                Exclude: Speculation, unverified claims, historical background, general statements, findings or answers. Base findings only on provided evidence documents\n
+                Don't include other informations besides what's requested.\n
+                All above insights should be provided relatively to the upcoming presidential elections. Therefore, skip and remove or just add 'non related' on cases or insights or narratives or any patterns that are not related to the upcoming elections.\n
+                Don't duplicate findings from the same documents you are analyzing. Only report NEW patterns not seen in previous analysis.\n
+                Don't use bullet points in the report, only paragraphs: the focus points above are to orient the content of your report not to be used as bullet points.\n
+                Document only what you have found and skip what you didn't find.\n
+                Skip and remove cases or insights or narratives or any patterns that are not related to the upcoming elections.\n
+                Always reference your findings with documents URLs as evidence.\n
+                Reference specific evidence from provided URLs
+                )
+                """
+            }, {
+                "role": "user",
+                "content": "\n".join([f"Document {i+1}: {doc[0]}\nURL: {doc[1]}" 
                                       for i, doc in enumerate(sample_docs)])
-                }],
-                temperature=0.6,
-                #max_tokens=800,
-                timeout=30
-            )
-            return {
-                "report": response.choices[0].message.content,
-                "metrics": metrics,
-                "sample_texts": [doc[0] for doc in selected_docs],
-                "sample_urls": [doc[1] for doc in selected_docs],
-                "Time": [doc[2] for doc in selected_docs],
-                "all_urls": cluster_data['URL'].head(20).tolist(),
-                "source_count": cluster_data['Source'].nunique(),
-                "momentum_score": cluster_data['momentum_score'].iloc[0]
+            }],
+            temperature=0.6,
+            #max_tokens=800,
+            timeout=30
+        )
+        return {
+            "report": response.choices[0].message.content,
+            "metrics": metrics,
+            "sample_texts": [doc[0] for doc in selected_docs],
+            "sample_urls": [doc[1] for doc in selected_docs],
+            "Time": [doc[2] for doc in selected_docs],
+            "all_urls": cluster_data['URL'].head(20).tolist(),
+            "source_count": cluster_data['Source'].nunique(),
+            "momentum_score": cluster_data['momentum_score'].iloc[0]
             }
-        except Exception as e:
-            logger.error(f"Report generation failed: {str(e)}")
-            return {"error": str(e)}
+    except Exception as e:
+        logger.error(f"Report generation failed: {str(e)}")
+        return {"error": str(e)}
+
 def categorize_momentum(score):
     """Complete threat tier classification with full descriptions"""
     score = float(score)
