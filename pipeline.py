@@ -1,6 +1,6 @@
 # pipeline.py
 # -*- coding: utf-8 -*-
-"""Election Threat Analysis Pipeline - Optimized for Streamlit Cloud"""
+"""Election Threat Analysis Pipeline with PCA Decomposition"""
 import torch
 import pandas as pd
 import numpy as np
@@ -8,22 +8,20 @@ import re
 import logging
 import matplotlib.pyplot as plt
 import seaborn as sns
-from transformers import BertTokenizer, BertModel, GPT2Tokenizer
+from transformers import BertTokenizer, BertModel, , GPT2Tokenizer
 from hdbscan import HDBSCAN
 import annoy
 from groq import Groq
-import hashlib
+from sklearn.decomposition import PCA
 import streamlit as st
-from datetime import timedelta
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Configuration (using Streamlit secrets)
 CONFIG = {
     "model_name": "bert-base-multilingual-cased",
+    "pca_components": 32,
     "temporal_weight": 0.4,
     "cluster_threshold": 0.35,
     "min_cluster_size": 5,
@@ -36,21 +34,15 @@ CONFIG = {
 
 @st.cache_resource(ttl=3600)
 def load_model():
-    """Cache model loading"""
-    logger.info("Loading BERT model...")
     model = BertModel.from_pretrained(CONFIG["model_name"])
     return model.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
 
 @st.cache_resource(ttl=3600)
 def load_tokenizer():
-    """Cache tokenizer loading"""
-    logger.info("Loading tokenizer...")
     return BertTokenizer.from_pretrained(CONFIG["model_name"])
 
 @st.cache_resource(ttl=3600)
 def init_groq_client():
-    """Cache Groq client initialization"""
-    logger.info("Initializing Groq client...")
     return Groq(api_key="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")
 
 class AnalysisPipeline:
@@ -62,49 +54,26 @@ class AnalysisPipeline:
 
     @st.cache_data(max_entries=5, ttl=3600, show_spinner="Processing data...")
     def process(_self, df):
-        """Main processing pipeline with caching"""
         try:
-            # Phase 1: Data Cleaning
             clean_df = _self.clean_data(df)
-            
-            # Phase 2: Embedding Generation
-            logger.info("Generating embeddings...")
             embeddings = _self.generate_embeddings(clean_df['text'].tolist())
-            
-            # Phase 3: Temporal Clustering
-            logger.info("Performing temporal clustering...")
             clustered_df = _self.temporal_clustering(clean_df, embeddings)
-            
-            # Phase 4: Trend Analysis
-            logger.info("Analyzing trends...")
             analysis_results = _self.analyze_trends(clustered_df)
-            
-            # Phase 5: Visualization
-            logger.info("Generating visualization...")
             analysis_results['viz_figure'] = _self.create_visualization(
-                clustered_df, 
-                analysis_results['momentum_states']
-            )
-            
+                clustered_df, analysis_results['momentum_states'])
             return analysis_results
-            
         except Exception as e:
             logger.error(f"Processing failed: {str(e)}")
             raise
 
     def clean_data(self, df):
-        """Data preprocessing"""
-        logger.info("Cleaning data...")
         valid_df = df.dropna(subset=["text"])
         valid_df['text'] = valid_df['text'].apply(
             lambda x: re.sub(r"[\x00-\x1F\x7F-\x9F]", "", str(x))
-        )
         return valid_df
 
     @st.cache_data(max_entries=10, ttl=3600)
     def generate_embeddings(_self, texts):
-        """Cache embedding generation"""
-        logger.info(f"Processing {len(texts)} texts...")
         inputs = _self.tokenizer(
             texts,
             return_tensors="pt",
@@ -116,16 +85,15 @@ class AnalysisPipeline:
         with torch.no_grad():
             outputs = _self.model(**inputs)
             
-        return outputs.last_hidden_state.mean(dim=1).cpu().numpy()
+        full_embeddings = outputs.last_hidden_state.mean(dim=1).cpu().numpy()
+        pca = PCA(n_components=CONFIG["pca_components"])
+        return pca.fit_transform(full_embeddings)
 
     def temporal_clustering(self, df, embeddings):
-        """Temporal-spatial clustering implementation"""
-        logger.info("Starting temporal clustering...")
         timestamps = df['Timestamp'].view('int64').values
         clusters = np.full(len(df), -1, dtype=int)
-        
-        # Build ANN index
         ann_index = annoy.AnnoyIndex(embeddings.shape[1], 'euclidean')
+        
         for i, emb in enumerate(embeddings):
             ann_index.add_item(i, emb)
         ann_index.build(20)
@@ -134,13 +102,9 @@ class AnalysisPipeline:
         chunk_size = 500
         
         for i in range(0, len(embeddings), chunk_size):
-            logger.info(f"Processing chunk {i//chunk_size + 1}/{(len(embeddings)//chunk_size)+1}")
             chunk_end = min(i + chunk_size, len(embeddings))
-            
-            # Temporal window filtering
             time_mask = (timestamps >= timestamps[i]) & (timestamps <= timestamps[chunk_end-1])
             
-            # Find ANN neighbors
             candidate_indices = []
             for idx in range(i, chunk_end):
                 neighbors = ann_index.get_nns_by_item(idx, CONFIG["ann_neighbors"])
@@ -152,17 +116,14 @@ class AnalysisPipeline:
             if len(candidate_indices) == 0:
                 continue
                 
-            # Calculate hybrid distances
             sub_emb = embeddings[candidate_indices]
             sub_ts = timestamps[candidate_indices]
-            
-            time_diff = np.abs(sub_ts[:, None] - sub_ts[None, :]) / 3.6e9  # Convert to hours
+            time_diff = np.abs(sub_ts[:, None] - sub_ts[None, :]) / 3.6e9
             time_mask = (time_diff < CONFIG["time_window_hours"]).astype(float)
             semantic_dists = np.linalg.norm(sub_emb[:, None] - sub_emb[None, :], axis=2)
             combined_dists = (CONFIG["temporal_weight"] * time_diff + 
                             (1 - CONFIG["temporal_weight"]) * semantic_dists) * time_mask
             
-            # HDBSCAN clustering
             clusterer = HDBSCAN(
                 min_cluster_size=CONFIG["min_cluster_size"],
                 metric="precomputed",
@@ -170,7 +131,6 @@ class AnalysisPipeline:
             )
             chunk_clusters = clusterer.fit_predict(combined_dists)
             
-            # Update cluster assignments
             valid_mask = chunk_clusters != -1
             chunk_clusters[valid_mask] += current_cluster
             clusters[candidate_indices] = chunk_clusters
@@ -180,11 +140,8 @@ class AnalysisPipeline:
         return df[df['Cluster'] != -1]
 
     def analyze_trends(self, clustered_df):
-        """Trend analysis with momentum calculation"""
-        logger.info("Analyzing trends...")
         df = clustered_df.copy()
         df['time_window'] = df['Timestamp'].dt.floor("24H")
-        
         emerging = []
         momentum_states = {}
         
@@ -198,8 +155,7 @@ class AnalysisPipeline:
             for _, row in cluster_data.iterrows():
                 if last_time is not None:
                     hours_diff = (row['Timestamp'] - last_time).total_seconds() / 3600
-                    decay = np.exp(-CONFIG["decay_factor"] * 
-                               (hours_diff ** CONFIG["decay_power"]))
+                    decay = np.exp(-CONFIG["decay_factor"] * (hours_diff ** CONFIG["decay_power"]))
                     momentum *= decay
                 
                 momentum += 1
@@ -224,10 +180,8 @@ class AnalysisPipeline:
         }
 
     def create_visualization(self, clustered_df, momentum_states):
-        """Generate in-memory visualization"""
-        logger.info("Creating visualization...")
         try:
-            plt.switch_backend('Agg')  # Non-interactive backend
+            plt.switch_backend('Agg')
             fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8))
             
             # Timeline Plot
@@ -358,10 +312,8 @@ class AnalysisPipeline:
             return {"error": str(e)}
 
 def categorize_momentum(score):
-    """Threat tier classification"""
     score = float(score)
     if score <= 150: return 'Tier 1: Ambient Noise'
     elif score <= 500: return 'Tier 2: Emerging Narrative'
     elif score <= 2000: return 'Tier 3: Coordinated Activity'
-    return 'Tier 4: Viral Emergency'
-    return plot_path
+    return 'Tier 
