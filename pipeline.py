@@ -312,8 +312,13 @@ class AnalysisPipeline:
             return {"error": str(e)}
 
 def categorize_momentum(score):
+    """Complete threat tier classification with full descriptions"""
     score = float(score)
-    if score <= 150: return 'Tier 1: Ambient Noise'
-    elif score <= 500: return 'Tier 2: Emerging Narrative'
-    elif score <= 2000: return 'Tier 3: Coordinated Activity'
-    return 'Tier 
+    if score <= 150:
+        return 'Tier 1: Ambient Noise (Normal baseline activity)'
+    elif score <= 500:
+        return 'Tier 2: Emerging Narrative (Potential story development)'
+    elif score <= 2000:
+        return 'Tier 3: Coordinated Activity (Organized group behavior)'
+    else:
+        return 'Tier 4: Viral Emergency (Requires immediate response)'
