@@ -1,13 +1,14 @@
+# app.py
 # -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-from datetime import datetime
 import os
+import gc
 from pipeline import (
-    bertrend_analysis, calculate_trend_momentum,
-    visualize_trends, generate_investigative_report,
-    categorize_momentum
+    AnalysisPipeline, 
+    categorize_momentum,
+    generate_investigative_report
 )
 
 # Configure page
@@ -23,15 +24,20 @@ def init_session_state():
     return {
         'processed': False,
         'reports': {},
-        'run_count': 0
+        'run_count': 0,
+        'current_file_hash': None,
+        'clustered_df': None,
+        'emerging_trends': None,
+        'momentum_states': None,
+        'viz_figure': None
     }
 
 if 'session' not in st.session_state:
     st.session_state.session = init_session_state()
 
-# Cache data loading with size limit
 @st.cache_data(max_entries=3, ttl=3600, show_spinner="Loading data...")
 def load_data(file):
+    """Cache data loading with hash validation"""
     if file.name.endswith('.csv'):
         df = pd.read_csv(file)
     else:
@@ -39,17 +45,16 @@ def load_data(file):
     df['Timestamp'] = pd.to_datetime(df['Timestamp'])
     return df
 
-# Cache resource-intensive components
-@st.cache_resource
-def init_analytics_pipeline():
-    from pipeline import AnalysisPipeline
+@st.cache_resource(show_spinner=False)
+def init_pipeline():
+    """Cache resource-heavy pipeline initialization"""
     return AnalysisPipeline()
 
 def main():
     st.title("🇬🇦 Gabon Election Threat Intelligence Dashboard")
     st.markdown("### Real-time Narrative Monitoring & FIMI Detection")
 
-    # File upload with size validation
+    # File upload with hash-based cache invalidation
     uploaded_file = st.file_uploader(
         "Upload Social Media Data (CSV/Excel)",
         type=["csv", "xlsx"],
@@ -57,12 +62,19 @@ def main():
     )
     
     if uploaded_file:
+        current_hash = hash(uploaded_file.getvalue())
+        
+        # Reset session if new file uploaded
+        if st.session_state.session['current_file_hash'] != current_hash:
+            st.session_state.session = init_session_state()
+            st.session_state.session['current_file_hash'] = current_hash
+            
         if uploaded_file.size > 200 * 1024 * 1024:
             st.error("File size exceeds 200MB limit")
             return
             
         df = load_data(uploaded_file)
-        pipeline = init_analytics_pipeline()
+        pipeline = init_pipeline()
 
         if st.button("🚀 Analyze Data"):
             with st.status("Processing data...", expanded=True) as status:
@@ -79,7 +91,7 @@ def main():
                     st.error(f"Processing failed: {str(e)}")
                     return
                 
-                # Periodic cleanup
+                # Cache maintenance
                 if st.session_state.session['run_count'] % 5 == 0:
                     gc.collect()
                     st.cache_data.clear()
@@ -91,10 +103,10 @@ def main():
         display_results()
 
 def display_results():
-    clustered_df = st.session_state.session['clustered_df']
-    momentum_states = st.session_state.session['momentum_states']
-    emerging_trends = st.session_state.session['emerging_trends']
-    viz_figure = st.session_state.session['viz_figure']
+    session = st.session_state.session
+    clustered_df = session['clustered_df']
+    momentum_states = session['momentum_states']
+    emerging_trends = session['emerging_trends']
 
     tab1, tab2, tab3 = st.tabs([
         "📊 Cluster Analytics", 
@@ -105,10 +117,13 @@ def display_results():
     with tab1:
         col1, col2 = st.columns([2, 1])
         with col1:
-            try:
-                st.pyplot(viz_figure, use_container_width=True)
-            except Exception as e:
-                st.error(f"Error displaying visualization: {str(e)}")
+            if session['viz_figure']:
+                try:
+                    st.pyplot(session['viz_figure'], use_container_width=True)
+                except Exception as e:
+                    st.error(f"Visualization error: {str(e)}")
+            else:
+                st.warning("No visualization available")
 
         with col2:
             display_momentum_table(emerging_trends, momentum_states)
@@ -148,7 +163,22 @@ def display_threat_reports(clustered_df, emerging_trends, momentum_states):
         format_func=lambda x: f"Cluster {x}"
     )
     
-    # Report generation with cache
+    # Get the cluster's momentum score and category
+    cluster_score = next((score for cluster, score in emerging_trends if cluster == cluster_selector), 0)
+    category = categorize_momentum(cluster_score)
+    
+    # Display category with color coding
+    color_map = {
+        'Tier 1: Ambient Noise': '🟢',
+        'Tier 2: Emerging Narrative': '🟡',
+        'Tier 3: Coordinated Activity': '🟠',
+        'Tier 4: Viral Emergency': '🔴'
+    }
+    st.markdown(f"""
+    **Threat Classification:** {color_map.get(category, '⚪')} `{category}`
+    """)
+    
+    # Rest of the report generation remains the same
     if cluster_selector not in st.session_state.session['reports']:
         with st.spinner("Generating intelligence report..."):
             report = generate_investigative_report(
@@ -181,8 +211,8 @@ def display_threat_categorization(emerging_trends):
     st.markdown("### Threat Tier Classification")
     intel_df = pd.DataFrame([{
         "Cluster": cluster,
-        "Momentum": score,
-        "Category": categorize_momentum(score)
+        "Momentum": score
+        #"Category": categorize_momentum(score)
     } for cluster, score in emerging_trends])
 
     st.bar_chart(
@@ -202,6 +232,4 @@ def display_threat_categorization(emerging_trends):
     )
 
 if __name__ == "__main__":
-    import gc
-    gc.enable()
     main()
