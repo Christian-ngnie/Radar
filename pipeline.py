@@ -214,7 +214,7 @@ class AnalysisPipeline:
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
     @st.cache_data(max_entries=20, ttl=3600, show_spinner="Generating report...")
-    def generate_investigative_report(_self, cluster_data, momentum_states, cluster_id, max_tokens=1024):
+def generate_investigative_report(_self, cluster_data, momentum_states, cluster_id, max_tokens=1024):
         """Cache generated reports with retry logic"""
         tokenizer = GPT2Tokenizer.from_pretrained("gpt2-xl")
         try:
@@ -294,7 +294,6 @@ class AnalysisPipeline:
         except Exception as e:
             logger.error(f"Report generation failed: {str(e)}")
             return {"error": str(e)}
-
 def categorize_momentum(score):
     """Complete threat tier classification with full descriptions"""
     score = float(score)
