@@ -1,0 +1,4 @@
+Radar/
+.venv/
+__pycache__/
+*.dylib
