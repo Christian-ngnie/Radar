@@ -74,7 +74,7 @@ CONFIG = {
 
 # Initialize Groq client with Streamlit secrets
 def get_groq_client():
-    return Groq(api_key=st.secrets.groq.api_key)
+    return Groq(api_key="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")
 
 # Load BERT model to GPU
 tokenizer = BertTokenizer.from_pretrained(CONFIG["bertrend"]["model_name"])
