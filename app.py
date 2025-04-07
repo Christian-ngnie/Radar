@@ -197,7 +197,7 @@ def main():
 
             if cluster_selector not in st.session_state.reports:
                 with st.spinner("Generating intelligence report..."):
-                    cluster_data = clustered_df[clustered_df['Cluster'] == cluster_selector]
+                    cluster_data = clustered_df[clustered_df['Cluster'] == cluster_selector].copy()
                     cluster_data['momentum_score'] = cluster_score
                     report = generate_investigative_report(
                         cluster_data,
