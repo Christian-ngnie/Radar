@@ -29,6 +29,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import streamlit as st
 import random
+from huggingface_hub import hf_hub_download
 
 
 # Configure logging
@@ -76,6 +77,19 @@ CONFIG = {
 # Initialize Groq client with Streamlit secrets
 def get_groq_client():
     return Groq(api_key="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")
+
+# Clear any corrupted cache
+model_cache = os.environ.get("HF_HOME", os.path.expanduser("~/.cache/huggingface"))
+for f in os.listdir(model_cache):
+    if "bert-base-multilingual" in f:
+        os.remove(os.path.join(model_cache, f))
+
+# Force fresh download
+hf_hub_download(
+    repo_id="bert-base-multilingual-cased",
+    filename="pytorch_model.bin",
+    force_download=True
+)
 
 
 # Load BERT model to GPU
