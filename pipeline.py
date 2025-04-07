@@ -20,7 +20,7 @@ from torch.utils.data import Dataset, DataLoader
 from transformers import BertTokenizer, BertModel, GPT2Tokenizer, DistilBertTokenizer, DistilBertModel
 from sklearn.decomposition import PCA
 import annoy
-from bertopic import BERTopic
+#from bertopic import BERTopic
 from hdbscan import HDBSCAN
 import logging
 from groq import Groq
