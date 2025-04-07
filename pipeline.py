@@ -78,12 +78,6 @@ CONFIG = {
 def get_groq_client():
     return Groq(api_key="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")
 
-# Clear any corrupted cache
-model_cache = os.environ.get("HF_HOME", os.path.expanduser("~/.cache/huggingface"))
-for f in os.listdir(model_cache):
-    if "bert-base-multilingual" in f:
-        os.remove(os.path.join(model_cache, f))
-
 # Force fresh download
 hf_hub_download(
     repo_id="bert-base-multilingual-cased",
@@ -93,8 +87,18 @@ hf_hub_download(
 
 
 # Load BERT model to GPU
-tokenizer = BertTokenizer.from_pretrained(CONFIG["bertrend"]["model_name"])
-bert_model = BertModel.from_pretrained(CONFIG["bertrend"]["model_name"]).to(device)
+#tokenizer = BertTokenizer.from_pretrained(CONFIG["bertrend"]["model_name"])
+#bert_model = BertModel.from_pretrained(CONFIG["bertrend"]["model_name"]).to(device)
+
+@st.cache_resource
+def load_models():
+    # Let Hugging Face handle caching automatically
+    tokenizer = BertTokenizer.from_pretrained("bert-base-multilingual-cased")
+    model = BertModel.from_pretrained("bert-base-multilingual-cased")
+    return tokenizer, model
+
+# Initialize models once
+tokenizer, bert_model = load_models()
 
 # Initialize GPU with mixed precision
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
