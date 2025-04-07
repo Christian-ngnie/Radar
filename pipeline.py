@@ -30,10 +30,6 @@ import streamlit as st
 import random
 from pathlib import Path
 
-# Set explicit cache path for Streamlit
-hf_cache = Path(__file__).parent / "hf_cache"
-os.environ["HF_HOME"] = str(hf_cache)
-
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
