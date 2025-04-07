@@ -29,6 +29,8 @@ import seaborn as sns
 import streamlit as st
 import random
 from pathlib import Path
+from huggingface_hub import login
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -76,10 +78,25 @@ CONFIG = {
 def get_groq_client():
     return Groq(api_key="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")
 
+# 1. Authenticate
+login(token=st.secrets["huggingface"]["token"])
+
+# 2. Load from your Hub repo
+@st.cache_resource
+def load_model():
+    return BertModel.from_pretrained("Christngn/bert-base-multilingual-cased")
+
+@st.cache_resource
+def load_tokenizer():
+    return BertTokenizer.from_pretrained("Christngn/bert-base-multilingual-cased")
+
+tokenizer = load_tokenizer()
+bert_model = load_model()
+
 
 # Load BERT model to GPU
-tokenizer = BertTokenizer.from_pretrained(CONFIG["bertrend"]["model_name"])
-bert_model = BertModel.from_pretrained(CONFIG["bertrend"]["model_name"]).to(device)
+#tokenizer = BertTokenizer.from_pretrained(CONFIG["bertrend"]["model_name"])
+#bert_model = BertModel.from_pretrained(CONFIG["bertrend"]["model_name"]).to(device)
 
 # Initialize GPU with mixed precision
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -87,9 +104,9 @@ scaler = torch.cuda.amp.GradScaler(enabled=CONFIG["gpu_params"]["fp16"])
 logger.info(f"Using device: {device}")
 
 # Optimized BERT Model Loading
-tokenizer = BertTokenizer.from_pretrained(CONFIG["bertrend"]["model_name"])
-bert_model = BertModel.from_pretrained(CONFIG["bertrend"]["model_name"]).to(device)
-bert_model = torch.compile(bert_model)  # Enable model compilation
+#tokenizer = BertTokenizer.from_pretrained(CONFIG["bertrend"]["model_name"])
+#bert_model = BertModel.from_pretrained(CONFIG["bertrend"]["model_name"]).to(device)
+#bert_model = torch.compile(bert_model)  # Enable model compilation
 
 # GPU-optimized Dataset with Pre-batching
 class DRCDataset(Dataset):
