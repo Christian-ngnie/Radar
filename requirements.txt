@@ -11,7 +11,7 @@ numpy>=1.26.0
 numba>=0.57.0
 llvmlite>=0.40.0
 bertopic
-hdbscan==0.8.40
+hdbscan==0.8.33
 annoy
 groq
 python-dotenv
