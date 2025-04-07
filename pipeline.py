@@ -16,7 +16,7 @@ import os
 import pandas as pd
 import numpy as np
 from torch.utils.data import Dataset, DataLoader
-from transformers import BertTokenizer, BertModel, GPT2Tokenizer
+from transformers import BertTokenizer, BertModel, GPT2Tokenizer, DistilBertTokenizer, DistilBertModel
 from sklearn.decomposition import PCA
 import annoy
 from bertopic import BERTopic
@@ -76,13 +76,10 @@ CONFIG = {
 def get_groq_client():
     return Groq(api_key="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")
 
-# Force download and cache
-BertTokenizer.from_pretrained(CONFIG["bertrend"]["model_name"], local_files_only=False)
-BertModel.from_pretrained(CONFIG["bertrend"]["model_name"], local_files_only=False)
 
 # Load BERT model to GPU
-tokenizer = BertTokenizer.from_pretrained(CONFIG["bertrend"]["model_name"])
-bert_model = BertModel.from_pretrained(CONFIG["bertrend"]["model_name"]).to(device)
+tokenizer = DistilBertTokenizer.from_pretrained(CONFIG["bertrend"]["model_name"])
+bert_model = DistilBertModel.from_pretrained(CONFIG["bertrend"]["model_name"]).to(device)
 
 # Initialize GPU with mixed precision
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -90,8 +87,8 @@ scaler = torch.cuda.amp.GradScaler(enabled=CONFIG["gpu_params"]["fp16"])
 logger.info(f"Using device: {device}")
 
 # Optimized BERT Model Loading
-tokenizer = BertTokenizer.from_pretrained(CONFIG["bertrend"]["model_name"])
-bert_model = BertModel.from_pretrained(CONFIG["bertrend"]["model_name"]).to(device)
+tokenizer = DistilBertTokenizer.from_pretrained(CONFIG["bertrend"]["model_name"])
+bert_model = DistilBertModel.from_pretrained(CONFIG["bertrend"]["model_name"]).to(device)
 bert_model = torch.compile(bert_model)  # Enable model compilation
 
 # GPU-optimized Dataset with Pre-batching
