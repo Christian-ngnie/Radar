@@ -29,7 +29,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import streamlit as st
 import random
-from huggingface_hub import hf_hub_download
 
 
 # Configure logging
@@ -81,6 +80,7 @@ def get_groq_client():
 
 # Load BERT model to GPU
 tokenizer = BertTokenizer.from_pretrained(CONFIG["bertrend"]["model_name"])
+tokenizer.save_pretrained(CONFIG["bertrend"]["model_name"])
 bert_model = BertModel.from_pretrained(CONFIG["bertrend"]["model_name"]).to(device)
 
 # Initialize GPU with mixed precision
