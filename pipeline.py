@@ -100,7 +100,8 @@ bert_model = load_model()
 
 # Initialize GPU with mixed precision
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-scaler = torch.amp.GradScaler(device_type='cuda' if torch.cuda.is_available() else 'cpu', enabled=CONFIG["gpu_params"]["fp16"])
+scaler = torch.amp.GradScaler()
+#scaler = torch.amp.GradScaler(device_type='cuda' if torch.cuda.is_available() else 'cpu', enabled=CONFIG["gpu_params"]["fp16"])
 logger.info(f"Using device: {device}")
 
 # Optimized BERT Model Loading
