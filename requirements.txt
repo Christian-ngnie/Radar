@@ -10,7 +10,8 @@ hf_xet>=0.1.9
 numpy>=1.26.0
 numba>=0.57.0
 llvmlite>=0.40.0
-hdbscan==0.8.33
+bertopic
+hdbscan
 annoy
 groq
 python-dotenv
@@ -21,7 +22,7 @@ nltk
 loguru
 fastdtw
 tenacity
-scikit-learn==1.2.2
+scikit-learn
 seaborn
 watchdog
 nest-asyncio
