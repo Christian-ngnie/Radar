@@ -1,7 +1,7 @@
 streamlit>=1.32.0
 pandas>=2.0.0
 matplotlib>=3.7.0
-torch==2.0.1
+torch>=2.2.0
 transformers==4.37.2
 huggingface_hub==0.16.4
 sentencepiece>=0.2.0  
@@ -11,7 +11,7 @@ numpy==1.24.3
 numba>=0.57.0
 llvmlite>=0.40.0
 hdbscan==0.8.33
-annoy==1.17.3
+annoy
 groq
 python-dotenv
 sentence-transformers==2.2.2
