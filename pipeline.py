@@ -42,7 +42,7 @@ logger.info(f"Using device: {device}")
 
 # Configuration (now using Streamlit secrets)
 CONFIG = {
-    "model_id": "llama3-70b-8192",#qwen-qwq-32b",#"llama-3.3-70b-versatile",
+    "model_id": "meta-llama/llama-4-scout-17b-16e-instruct",#"llama3-70b-8192",#qwen-qwq-32b",#"llama-3.3-70b-versatile",
     "gpu_params": {
         "batch_size": 256,  # Increased batch size
         "max_seq_length": 128,
