@@ -79,9 +79,7 @@ def get_groq_client():
 
 # Load BERT model to GPU
 tokenizer = BertTokenizer.from_pretrained(CONFIG["bertrend"]["model_name"])
-tokenizer.save_pretrained(CONFIG["bertrend"]["model_name"])
 bert_model = BertModel.from_pretrained(CONFIG["bertrend"]["model_name"]).to(device)
-bert_model.save_pretrained(CONFIG["bertrend"]["model_name"])
 
 # Initialize GPU with mixed precision
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
