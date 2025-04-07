@@ -61,7 +61,7 @@ CONFIG = {
         "time_window_hours": 48  # Temporal constraint
     },
     "analysis": {
-        "time_window": "24H",
+        "time_window": "24h",
         "min_sources": 5,
         "decay_factor": 0.015,
         "decay_power": 1.8,
@@ -100,7 +100,7 @@ bert_model = load_model()
 
 # Initialize GPU with mixed precision
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-scaler = torch.cuda.amp.GradScaler(enabled=CONFIG["gpu_params"]["fp16"])
+scaler = torch.amp.GradScaler(device_type='cuda' if torch.cuda.is_available() else 'cpu', enabled=CONFIG["gpu_params"]["fp16"])
 logger.info(f"Using device: {device}")
 
 # Optimized BERT Model Loading
@@ -374,7 +374,7 @@ def visualize_trends(clustered_df, momentum_states, save_path=None):
         cluster_data = clustered_df[clustered_df['Cluster'] == cluster]
 
         # Cumulative Activity (Bars)
-        timeline = cluster_data.groupby(pd.Grouper(key='Timestamp', freq='24H'))['text'].count().cumsum()
+        timeline = cluster_data.groupby(pd.Grouper(key='Timestamp', freq='24h'))['text'].count().cumsum()
         ax1.bar(timeline.index, timeline, alpha=0.3, label=f"Cluster {cluster} Total")
 
         # Momentum Score (Line)
