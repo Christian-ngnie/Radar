@@ -14,7 +14,7 @@ hdbscan
 annoy
 groq
 python-dotenv
-sentence-transformers==2.6.0
+sentence-transformers==3.4.1
 flair
 top2vec
 nltk
