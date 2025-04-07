@@ -49,7 +49,7 @@ CONFIG = {
         "fp16": True  # Enable mixed precision
     },
     "bertrend": {
-        "model_name": "/mount/src/radar/local_models/bert-base-multilingual-cased",
+        "model_name": "bert-base-multilingual-cased",
         "temporal_weight": 0.4,
         "cluster_threshold": 0.35,
         "min_cluster_size": 4,
@@ -79,8 +79,8 @@ def get_groq_client():
 
 
 # Load BERT model to GPU
-tokenizer = BertTokenizer.from_pretrained(CONFIG["bertrend"]["model_name"], cache_dir="./model_cache", local_files_only=False)
-bert_model = BertModel.from_pretrained(CONFIG["bertrend"]["model_name"], cache_dir="./model_cache", local_files_only=False ).to(device)
+tokenizer = BertTokenizer.from_pretrained(CONFIG["bertrend"]["model_name"])
+bert_model = BertModel.from_pretrained(CONFIG["bertrend"]["model_name"]).to(device)
 
 # Initialize GPU with mixed precision
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -88,8 +88,8 @@ scaler = torch.cuda.amp.GradScaler(enabled=CONFIG["gpu_params"]["fp16"])
 logger.info(f"Using device: {device}")
 
 # Optimized BERT Model Loading
-tokenizer = BertTokenizer.from_pretrained(CONFIG["bertrend"]["model_name"], cache_dir="./model_cache", local_files_only=False)
-bert_model = BertModel.from_pretrained(CONFIG["bertrend"]["model_name"], cache_dir="./model_cache", local_files_only=False).to(device)
+tokenizer = BertTokenizer.from_pretrained(CONFIG["bertrend"]["model_name"])
+bert_model = BertModel.from_pretrained(CONFIG["bertrend"]["model_name"]).to(device)
 bert_model = torch.compile(bert_model)  # Enable model compilation
 
 # GPU-optimized Dataset with Pre-batching
