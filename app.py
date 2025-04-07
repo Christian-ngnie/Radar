@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 """Gabon Election Threat Intelligence Dashboard"""
+# Configure page
+st.set_page_config(
+    page_title="Election Threat Monitor",
+    page_icon="🌍",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
 import asyncio
 import sys
@@ -19,14 +26,6 @@ from pipeline import (
     bertrend_analysis, calculate_trend_momentum,
     visualize_trends, generate_investigative_report,
     categorize_momentum
-)
-
-# Configure page
-st.set_page_config(
-    page_title="Election Threat Monitor",
-    page_icon="🌍",
-    layout="wide",
-    initial_sidebar_state="expanded"
 )
 
 # Session state initialization
