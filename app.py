@@ -1,12 +1,5 @@
 # -*- coding: utf-8 -*-
 """Gabon Election Threat Intelligence Dashboard"""
-# Configure page
-st.set_page_config(
-    page_title="Election Threat Monitor",
-    page_icon="🌍",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
 
 import asyncio
 import sys
@@ -21,6 +14,15 @@ if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 else:
     asyncio.set_event_loop_policy(asyncio.DefaultEventLoopPolicy())
+
+# Configure page
+st.set_page_config(
+    page_title="Election Threat Monitor",
+    page_icon="🌍",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
 
 from pipeline import (
     bertrend_analysis, calculate_trend_momentum,
