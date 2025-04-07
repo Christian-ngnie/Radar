@@ -8,11 +8,12 @@ Original file is located at
 """
 
 # pipeline.py
+import os
+os.makedirs("./model_cache", exist_ok=True)
 import torch
 torch._dynamo.config.suppress_errors = True  # Disable Dynamo error propagation
 #torch._dynamo.config.disable = True  # Completely disable TorchDynamo
 #torch.set_float32_matmul_precision('high')  # Optimize for MPS/MacOS
-import os
 import pandas as pd
 import numpy as np
 from torch.utils.data import Dataset, DataLoader
@@ -48,7 +49,7 @@ CONFIG = {
         "fp16": True  # Enable mixed precision
     },
     "bertrend": {
-        "model_name": "bert-base-multilingual-cased",
+        "model_name": "./local_models/bert-base-multilingual-cased",
         "temporal_weight": 0.4,
         "cluster_threshold": 0.35,
         "min_cluster_size": 4,
@@ -78,8 +79,8 @@ def get_groq_client():
 
 
 # Load BERT model to GPU
-tokenizer = BertTokenizer.from_pretrained(CONFIG["bertrend"]["model_name"])
-bert_model = BertModel.from_pretrained(CONFIG["bertrend"]["model_name"]).to(device)
+tokenizer = BertTokenizer.from_pretrained(CONFIG["bertrend"]["model_name"], cache_dir="./model_cache", local_files_only=False)
+bert_model = BertModel.from_pretrained(CONFIG["bertrend"]["model_name"], cache_dir="./model_cache", local_files_only=False ).to(device)
 
 # Initialize GPU with mixed precision
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -87,8 +88,8 @@ scaler = torch.cuda.amp.GradScaler(enabled=CONFIG["gpu_params"]["fp16"])
 logger.info(f"Using device: {device}")
 
 # Optimized BERT Model Loading
-tokenizer = BertTokenizer.from_pretrained(CONFIG["bertrend"]["model_name"])
-bert_model = BertModel.from_pretrained(CONFIG["bertrend"]["model_name"]).to(device)
+tokenizer = BertTokenizer.from_pretrained(CONFIG["bertrend"]["model_name"], cache_dir="./model_cache", local_files_only=False)
+bert_model = BertModel.from_pretrained(CONFIG["bertrend"]["model_name"], cache_dir="./model_cache", local_files_only=False).to(device)
 bert_model = torch.compile(bert_model)  # Enable model compilation
 
 # GPU-optimized Dataset with Pre-batching
