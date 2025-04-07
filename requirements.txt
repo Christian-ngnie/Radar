@@ -7,8 +7,9 @@ huggingface_hub>=0.21.0
 sentencepiece>=0.2.0  
 protobuf>=3.20.0
 hf_xet>=0.1.9  
-numpy>=1.26.0
+numpy==1.24.3
 numba>=0.57.0
+cython>=0.29.34
 llvmlite>=0.40.0
 bertopic
 hdbscan==0.8.33
