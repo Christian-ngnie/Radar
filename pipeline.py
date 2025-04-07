@@ -76,6 +76,10 @@ CONFIG = {
 def get_groq_client():
     return Groq(api_key="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")
 
+# Force download and cache
+BertTokenizer.from_pretrained(CONFIG["bertrend"]["model_name"], local_files_only=False)
+BertModel.from_pretrained(CONFIG["bertrend"]["model_name"], local_files_only=False)
+
 # Load BERT model to GPU
 tokenizer = BertTokenizer.from_pretrained(CONFIG["bertrend"]["model_name"])
 bert_model = BertModel.from_pretrained(CONFIG["bertrend"]["model_name"]).to(device)
