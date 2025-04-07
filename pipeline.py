@@ -9,7 +9,6 @@ Original file is located at
 
 # pipeline.py
 import os
-os.makedirs("./model_cache", exist_ok=True)
 import torch
 torch._dynamo.config.suppress_errors = True  # Disable Dynamo error propagation
 #torch._dynamo.config.disable = True  # Completely disable TorchDynamo
@@ -82,6 +81,7 @@ def get_groq_client():
 tokenizer = BertTokenizer.from_pretrained(CONFIG["bertrend"]["model_name"])
 tokenizer.save_pretrained(CONFIG["bertrend"]["model_name"])
 bert_model = BertModel.from_pretrained(CONFIG["bertrend"]["model_name"]).to(device)
+bert_model.save_pretrained(CONFIG["bertrend"]["model_name"])
 
 # Initialize GPU with mixed precision
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
