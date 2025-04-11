@@ -467,18 +467,31 @@ def generate_investigative_report(cluster_data, momentum_states, cluster_id, max
             messages=[{
                 "role": "system",
                 "content": f"""(
-                    Generate {Country} structured Foreign/domestic Information Manipulation and Interference (FIMI) intelligence report related to the upcoming presidential elections:
+                    Generate {Country} structured Information Manipulation and Interference (IMI) intelligence report related to the upcoming presidential elections.
 
-                    -Provide general context and identify key narratives with the reference documents as evidence.\n
+                    **Critical Rules: URL Accuracy & Uniqueness are Paramount!**
+                    - **Direct URL Match:** Each summary MUST directly reflect the provided URL's text content. No exceptions.
+                    - **Quote Evidence:** Use direct quotes from the URL to support summaries, where possible.
+                    - **No Inferences:** Do NOT add information not explicitly found in the URL.
+                    - **Unique URL Use:** Each finding MUST be supported by a UNIQUE URL. Do NOT reuse URLs.
+                    - **TikTok Focus:** Only use TikTok URLs with elections or socio-political captions/content.
+                    - **Original Sources:** Use original source URLs, not retweets.
+                    - **Report Focal Areas:** Cover: electoral integrity, voter registration, campaigns, manipulation, repression, arrests.
+                    - **Report Content:** Context, narratives, Foreign, Regional or extremists involvement, hate speech, account networks, Technique Tactics procedures (TTPs), Investigative Leads.
+                    - **URL-Summary Verification:** Before generating a summary, verify its direct match to the URL's text. If mismatch, state "URL and summary mismatch. Skipping this entry."
+
+
+                    **Analysis Focus:**
+                    -Provide general context and identify key elections-related narratives with the reference documents as evidence.\n
                     -Map these narratives lifecycle: First Detected {cluster_data['Timestamp'].min().strftime('%Y-%m-%d %H:%M')} → Last Updated {cluster_data['Timestamp'].max().strftime('%Y-%m-%d %H:%M')}\n
                     -Identify these narratives vehicles like memes, videos or text posts and provide the reference documents\n
                     -Identify primary sources platforms used to spread these narratives\n
 
 
-                    -Identify and analyse ties and involvement of Russia or China or Turkey or Saudi Arabia.\n
+                    -Identify and analyse ties and involvement of France OR United States (US) OR Russia or China or Turkey or Saudi Arabia.\n
                     -Identify extremism/jihadist cases\n
                     -Identify any case of anti-West, anti-France, pro/anti-ECOWAS, pro/anti-AES (Alliance of Sahel States), pro-Russia or Pro-China sentiment\n
-                    -Clearly identify hate speech, negative stereotyping, toxic incitement and mention some of them. Highlight and mention also the corresponding trigger lexicons used\n\n
+                    -Identify ethnic/regional slurs, negative stereotyping, toxic incitement and mention some of them. Highlight and mention also the corresponding trigger lexicons used\n\n
 
 
                     - Identify coordinated network of accounts, analyse network topology and highlight coordination signs like post timing, source distribution, inauthentic engagement spikes on posts. As metrics we have: Total Posts: {metrics.get('cumulative_activity', 'N/A')}, Peak Hourly Activity: {metrics.get('peak_activity', 'N/A')}, source_count: {cluster_data['Source'].nunique()}, Current Momentum Score: {metrics.get('momentum', 'N/A'):.2f}, Timestamp: {cluster_data['Timestamp']}\n
@@ -488,17 +501,21 @@ def generate_investigative_report(cluster_data, momentum_states, cluster_id, max
                     - Identify reused/manipulated media (e.g., repurposed protest footage from 2021–2024 framed as “current unrest,” AI-generated imagery of alleged government corruption); Identify Viral templates linking policy decisions (e.g., austerity, resource deals) to foreign actors (France/UAE/China/Turkey/Saudi Arabia)\n
                     - Identify Linguistic fingerprints like translation artifacts, atypical local dialect usage\n
 
+                    **Investigative Leads:** Suggest 2-3 leads on potential election interference.using clear, technical and advanced style sentences\n\n
 
-                    -Based on all above, suggest 2-3 strong online Investigative leads using using clear, technical and advanced style sentences\n\n
+                    **Data Handling:**
+
                     Exclude: Speculation, unverified claims, historical background, general statements, findings or answers. Base findings only on provided evidence documents\n
                     Don't include other informations besides what's requested.\n
                     All above insights should be provided relatively to the upcoming presidential elections. Therefore, skip and remove or just add 'non related' on cases or insights or narratives or any patterns that are not related to the upcoming elections.\n
                     Don't duplicate findings from the same documents you are analyzing. Only report NEW patterns not seen in previous analysis.\n
                     Don't use bullet points in the report, only paragraphs: the focus points above are to orient the content of your report not to be used as bullet points.\n
                     Document only what you have found and skip what you didn't find.\n
-                    Skip and remove cases or insights or narratives or any patterns that are not related to the upcoming elections.\n
                     Always reference your findings with documents URLs as evidence.\n
-                    Reference specific evidence from provided URLs
+                    Reference specific evidence from provided URLs.\n
+                    Your leads shouldn't entail offline investigations.\n
+
+                    **Filter:** Exclude URLs clearly unrelated to election conversations (e.g., general advertisements).
                 )
                 """
             }, {
